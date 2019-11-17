@@ -8,7 +8,9 @@ int main(int argc, const char **argv) {
         web_proxy->create_socket();
         cout << "[INFO] - Socket created successfully on port: " 
         << port << endl;
+        web_proxy->loop();
     } catch (const Error& e) {
         cout << e.what() << endl;
+        delete web_proxy;
     }
 }

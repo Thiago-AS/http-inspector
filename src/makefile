@@ -1,5 +1,5 @@
 CC=g++ -std=c++11
-CFLAGS=-I$(IDIR) -Wall
+CFLAGS=-I$(IDIR) -Wall -pthread
 
 IDIR=../include
 ODIR=obj
