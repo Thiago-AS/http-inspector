@@ -4,10 +4,10 @@ CFLAGS=-I$(IDIR) -Wall -pthread
 IDIR=../include
 ODIR=obj
 
-_DEPS=proxy.hpp helper.hpp
+_DEPS=proxy.hpp helper.hpp request.hpp
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ=proxy.o helper.o main.o
+_OBJ=proxy.o helper.o main.o request.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp $(DEPS)

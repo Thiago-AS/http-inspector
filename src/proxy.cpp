@@ -43,7 +43,7 @@ void Proxy::loop() {
         try {
             handle_request();
         } catch (const Error& e) {
-            throw;
+            cout << e.what() << endl;
         }
     }
 }
@@ -53,11 +53,19 @@ void Proxy::handle_request() {
     if(this->response == nullptr) 
         throw Error("Memory allocation error");
     
-    int byte_recieved = recv(this->connection, this->buffer, sizeof(this->buffer)
-                            , 0);
+    int byte_recieved = recv(this->connection, this->buffer, 
+                                sizeof(this->buffer), 0);
     if(byte_recieved < 0)
         throw Error("Error reading the request");
 
     strcat(response, buffer);
+    Request *new_request = new Request();
+    if(new_request == nullptr) 
+        throw Error("Memory allocation error");
     
+    try {
+        new_request->parse(response);
+    } catch (const Error& e) {
+        cout << e.what() << endl;
+    } 
 }
