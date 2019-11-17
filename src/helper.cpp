@@ -12,3 +12,12 @@ unsigned int get_port(int argc, const char **argv) {
 
     return response;
 }
+
+Error::Error(const string& msg) {
+    this->message = "[ERROR] - " + msg;
+}
+
+const char *Error::what() const throw()
+{   
+    return this->message.c_str();
+}

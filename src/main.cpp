@@ -2,5 +2,13 @@
 #include "../include/helper.hpp"
 
 int main(int argc, const char **argv) {
-    Proxy* web_proxy = new Proxy(get_port(argc, argv));
+    unsigned int port = get_port(argc, argv);
+    Proxy* web_proxy = new Proxy(port);
+    try{
+        web_proxy->create_socket();
+        cout << "[INFO] - Socket created successfully on port: " 
+        << port << endl;
+    } catch (const Error& e) {
+        cout << e.what() << endl;
+    }
 }
