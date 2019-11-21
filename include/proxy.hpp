@@ -3,8 +3,9 @@
 
 #include<iostream>
 #include<sys/socket.h> 
-#include"./helper.hpp"
 #include <netinet/in.h>
+#include <unistd.h>
+#include"./helper.hpp"
 #include"./request.hpp"
 #define BUFFERSIZE 4096
 using namespace std;

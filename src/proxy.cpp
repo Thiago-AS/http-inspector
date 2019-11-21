@@ -27,7 +27,6 @@ void Proxy::create_socket() {
 
     if (listen(this->sockfd, SOMAXCONN) < 0)
         throw Error("Could not listen to the given socket");
-    
 }
 
 void Proxy::loop() {
@@ -44,6 +43,7 @@ void Proxy::loop() {
             handle_request();
         } catch (const Error& e) {
             cout << e.what() << endl;
+            close(this->connection);
         }
     }
 }
@@ -66,6 +66,6 @@ void Proxy::handle_request() {
     try {
         new_request->parse(response);
     } catch (const Error& e) {
-        cout << e.what() << endl;
+        throw;
     } 
 }

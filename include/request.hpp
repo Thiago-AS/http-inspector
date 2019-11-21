@@ -4,12 +4,10 @@
 #include<iostream>
 #include<string>
 #include<cstring>
+#include<map>
 #include"./helper.hpp"
 #define BUFFERSIZE 4096
 using namespace std;
-
-class Headers {
-};
 
 class Request {
     public:
@@ -20,10 +18,12 @@ class Request {
         string path;
         string version;
         string buf;
-        Headers *header;
+        map<string, string> header;
         Request();
         ~Request();
-        bool parse(const char*);
+        void parse(const char*);
+        void get_headers(string&);
+        bool valid_protocol(const string);
 };
 
 #endif
