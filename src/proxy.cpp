@@ -11,11 +11,11 @@ Proxy::~Proxy() {
 
 }
 
-void Proxy::create_socket() {
+void Proxy::create_server() {
     int opt_val = 1;
     
     if ((this->sockfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
-        throw Error("Socket creation failed");
+        throw Error("Socket creation failed"); 
 
     if (setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 
         &opt_val, sizeof(int)) == -1)
@@ -45,7 +45,7 @@ void Proxy::loop() {
             cout << e.what() << endl;
             close(this->connection);
         }
-    }
+    } 
 }
 
 void Proxy::handle_request() {
@@ -68,4 +68,20 @@ void Proxy::handle_request() {
     } catch (const Error& e) {
         throw;
     } 
+}
+
+int Proxy::create_socket(const string addr, const string port){
+    struct addrinfo *servinfo;
+
+    int socket;
+    if ((socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
+        throw Error("Socket creation failed");
+
+    //Ponteiro de arquivo para o servidor conectado
+    if(connect(socket, servinfo->ai_addr, servinfo->ai_addrlen) < 0){
+        cout << "Error in connecting to server!\n" << endl;
+    }
+
+    freeaddrinfo(servinfo);
+    return socket;
 }

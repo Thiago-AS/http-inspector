@@ -5,7 +5,7 @@ int main(int argc, const char **argv) {
     unsigned int port = get_port(argc, argv);
     Proxy* web_proxy = new Proxy(port);
     try{
-        web_proxy->create_socket();
+        web_proxy->create_server();
         cout << "[INFO] - Socket created successfully on port: " 
         << port << endl;
         web_proxy->loop();

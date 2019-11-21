@@ -21,9 +21,10 @@ class Proxy {
     public:
         Proxy(unsigned int);
         ~Proxy();
-        void create_socket();
+        void create_server();
         void loop();
         void handle_request();
+        int create_socket(const string, const string);
 };
 
 #endif
