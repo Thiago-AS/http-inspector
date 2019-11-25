@@ -7,19 +7,18 @@ Request::~Request(){
 }
 
 void Request::parse(const char* response) {
-    string str_response(response), full_url;
+    string str_response(response);
+    this->request_message = str_response;
     size_t index = str_response.find("\r\n\r\n"), pos;
     if(index == string::npos)
         throw Error("Invalid request - no end of header");
-
-    cout << str_response << endl;
 
     pos = str_response.find(' ');
     this->method = str_response.substr(0, pos);
     str_response.erase(0, pos+1); 
 
     pos = str_response.find(' ');
-    full_url = str_response.substr(0, pos);
+    this->path = str_response.substr(0, pos);
     str_response.erase(0, pos+1);
 
     pos = str_response.find('\n');
@@ -30,6 +29,7 @@ void Request::parse(const char* response) {
         throw Error("Invalid request - protocol not supported");
     
     get_headers(str_response);
+    cout << this->request_message << endl;
 }
 
 void Request::get_headers(string& response) {
@@ -38,7 +38,7 @@ void Request::get_headers(string& response) {
     while ((pos = response.find(delimiter)) != string::npos) {
         key = response.substr(0, pos);
         response.erase(0, pos+delimiter.size()); 
-        end_line = response.find('\n');
+        end_line = response.find("\r\n");
         value = response.substr(0, end_line);
         header[key] = value;
     }

@@ -1,9 +1,10 @@
 #ifndef PROXY_HPP
 #define PROXY_HPP
 
-#include<iostream>
-#include<sys/socket.h> 
+#include <iostream>
+#include <sys/socket.h> 
 #include <netinet/in.h>
+#include <netdb.h>
 #include <unistd.h>
 #include"./helper.hpp"
 #include"./request.hpp"
@@ -18,13 +19,18 @@ class Proxy {
         struct sockaddr_in address;
         char buffer[BUFFERSIZE];
         char *response;
+
+        int http_sockfd;
+        int http_connection;
     public:
         Proxy(unsigned int);
         ~Proxy();
         void create_server();
         void loop();
         void handle_request();
-        int create_socket(const string, const string);
+        void create_http_socket(const string);
+        void send_http_request(const string);
+        void clear_buffer();
 };
 
 #endif

@@ -11,13 +11,10 @@ using namespace std;
 
 class Request {
     public:
+        string request_message;
         string method;
-        string protocol;
-        string host;
-        string port;
         string path;
         string version;
-        string buf;
         map<string, string> header;
         Request();
         ~Request();

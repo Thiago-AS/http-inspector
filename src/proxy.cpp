@@ -65,23 +65,37 @@ void Proxy::handle_request() {
     
     try {
         new_request->parse(response);
+        create_http_socket(new_request->header["Host"]);
+        send_http_request(new_request->request_message);
     } catch (const Error& e) {
         throw;
     } 
+    clear_buffer();
 }
 
-int Proxy::create_socket(const string addr, const string port){
-    struct addrinfo *servinfo;
+void Proxy::create_http_socket(const string addr){
+    if ((this->http_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
+        throw Error("Socket creation failed"); 
 
-    int socket;
-    if ((socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
-        throw Error("Socket creation failed");
+    struct hostent *server = gethostbyname(addr.c_str());
+    if (server == NULL)
+        throw Error("Could not find host address"); 
 
-    //Ponteiro de arquivo para o servidor conectado
-    if(connect(socket, servinfo->ai_addr, servinfo->ai_addrlen) < 0){
-        cout << "Error in connecting to server!\n" << endl;
+    struct sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(80);
+
+    if (connect(this->http_sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
+        throw Error("Could not connect with the following socket");
+}
+
+void Proxy::send_http_request(const string msg){
+    if ((send(this->http_sockfd, (void*) msg.c_str(), msg.size(), 0)) < 0)
+        throw Error("Could send message to remote server");
+}
+
+void Proxy::clear_buffer() {
+    for(int i=0; i<BUFFERSIZE; i++) {
+        this->buffer[i] = 0;
     }
-
-    freeaddrinfo(servinfo);
-    return socket;
 }
