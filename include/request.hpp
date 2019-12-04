@@ -7,6 +7,8 @@
 #include<map>
 #include"./helper.hpp"
 #define BUFFERSIZE 4096
+#define REQUEST 0
+#define RESPONSE 1
 using namespace std;
 
 class Request {

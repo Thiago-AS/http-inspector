@@ -6,6 +6,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 #include"./helper.hpp"
 #include"./request.hpp"
 #define BUFFERSIZE 4096
@@ -21,7 +24,6 @@ class Proxy {
         char *response;
 
         int http_sockfd;
-        int http_connection;
     public:
         Proxy(unsigned int);
         ~Proxy();
@@ -31,6 +33,8 @@ class Proxy {
         void create_http_socket(const string);
         void send_http_request(const string);
         void clear_buffer();
+        void proxy_back();
+        void save_in_cache(Request*, int);
 };
 
 #endif

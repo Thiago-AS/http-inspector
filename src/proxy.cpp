@@ -43,8 +43,8 @@ void Proxy::loop() {
             handle_request();
         } catch (const Error& e) {
             cout << e.what() << endl;
-            close(this->connection);
         }
+        close(this->connection);
     } 
 }
 
@@ -62,40 +62,64 @@ void Proxy::handle_request() {
     Request *new_request = new Request();
     if(new_request == nullptr) 
         throw Error("Memory allocation error");
-    
+
     try {
         new_request->parse(response);
+        save_in_cache(new_request, REQUEST);
         create_http_socket(new_request->header["Host"]);
         send_http_request(new_request->request_message);
+        //proxy_back();
     } catch (const Error& e) {
         throw;
     } 
-    clear_buffer();
 }
 
 void Proxy::create_http_socket(const string addr){
-    if ((this->http_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
-        throw Error("Socket creation failed"); 
+    string port = "80";
+    struct addrinfo hints = {0}, *serv_addr;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    struct hostent *server = gethostbyname(addr.c_str());
-    if (server == NULL)
+    cout << "[INFO] - Host: " + addr + " Port: " + port << endl;
+
+    if (getaddrinfo(addr.c_str(), port.c_str(), &hints, &serv_addr) != 0)
         throw Error("Could not find host address"); 
 
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(80);
+    if ((this->http_sockfd = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol)) == 0) 
+        throw Error("Socket creation failed"); 
 
-    if (connect(this->http_sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
+    if (connect(this->http_sockfd,serv_addr->ai_addr, serv_addr->ai_addrlen) < 0 )
         throw Error("Could not connect with the following socket");
 }
 
 void Proxy::send_http_request(const string msg){
+    cout << msg << endl;
     if ((send(this->http_sockfd, (void*) msg.c_str(), msg.size(), 0)) < 0)
         throw Error("Could send message to remote server");
 }
 
-void Proxy::clear_buffer() {
-    for(int i=0; i<BUFFERSIZE; i++) {
-        this->buffer[i] = 0;
+void Proxy::proxy_back() {
+    clear_buffer();
+    while(recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0) != 0){
+
+        clear_buffer();
     }
+}
+
+void Proxy::clear_buffer() {
+    bzero(this->buffer, sizeof(this->buffer));
+}
+
+void Proxy::save_in_cache(Request *req, int type) {
+    ofstream file;
+    string file_name = req->path;
+    replace(file_name.begin(), file_name.end(), '/', '|');
+    if(type == REQUEST) {
+        file.open("../cache/requests_" + file_name);
+    } else {
+        file.open("../cache/response_" + file_name);
+    }
+    file << this->buffer;
+    file.close();
 }

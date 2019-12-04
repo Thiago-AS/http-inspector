@@ -29,7 +29,6 @@ void Request::parse(const char* response) {
         throw Error("Invalid request - protocol not supported");
     
     get_headers(str_response);
-    cout << this->request_message << endl;
 }
 
 void Request::get_headers(string& response) {
