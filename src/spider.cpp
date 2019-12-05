@@ -8,24 +8,24 @@
 using namespace std;
 
 
-void Spider::run(string filename, string addr, int tree_h, int act_h, int type) {
-	string path = filename;
+void Spider::run(string file_name, string addr, int tree_h, int act_h) {
+	string path = file_name;
 	replace( path.begin(), path.end(), '_', '/');
 	this->references.push_back(path);
 	if (act_h < tree_h){
 		fstream file;
-        this->proxy->create_http_socket(addr);
-		this->proxy->send_http_request("msg");
-		file.open("../cache/response_" + filename);
+		string f_name = "http://"+addr+path;
+		replace( f_name.begin(), f_name.end(), '/', '_');
+		file.open("../cache/response_" + f_name);
 		if(file.is_open()) {
 			getPageReference(addr, act_h, tree_h, file);
 		} else {
-			throw Error("Error opening response file");
+			proxy->send_http_request("GET " + path + " HTTP/1.1\r\nHost: " + addr + "\r\n\r\n\r\n", f_name);
 		}
 		file.close();
 		if (act_h != 0) {
-			string cmd = "rm ../cache/response_" + filename;
-			system(cmd.c_str());
+			// string cmd = "rm ../cache/response_" + f_name;
+			// system(cmd.c_str());
 		}
 	}
 	
@@ -57,10 +57,15 @@ int Spider::searchLineReference(string search_token, int offset, string line, in
 				break;
 			}
 		}
-		if (value.find("http://" + addr) != string::npos || line[pos+offset] == '/') {
-			if (line[pos+offset] != '/') value = value.substr(7 + addr.length(), value.length());
+		if (value.find("http://" + addr) != string::npos || value.find("http") == string::npos) {
+			if(value.find("http://" + addr) != string::npos){
+				value = value.substr(7, value.size());
+				value = value.substr(value.find('/'), value.size());
+			}else{
+				value.insert(0, 1, '/');
+			}
 			int hasValue = 0;
-			for(int i = 0; i < this->references.size() ; i++)
+			for(unsigned int i = 0; i < this->references.size() ; i++)
 			{
 				if (this->references[i] == value) {
 					hasValue = 1;
@@ -69,7 +74,7 @@ int Spider::searchLineReference(string search_token, int offset, string line, in
 			}
 			if (!hasValue) {
 				for(int i = 0; i < act_h + 1; i++) {
-					this->file << "  ";
+					this->file << "\t";
 				}
 				this->file << value << endl;
 				this->references.push_back(value);
@@ -77,7 +82,7 @@ int Spider::searchLineReference(string search_token, int offset, string line, in
 				&& value.find(".ico") == string::npos && value.find(".gif") == string::npos
 				&& value.find(".js") == string::npos && value.find(".css") == string::npos) {
 					replace( value.begin(), value.end(), '/', '_');
-					this->run(value, addr, tree_h, act_h+1, 0);
+					this->run(value, addr, tree_h, act_h+1);
 				}
 				
 			}

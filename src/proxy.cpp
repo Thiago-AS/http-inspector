@@ -1,4 +1,7 @@
 #include "../include/proxy.hpp"
+#include "./helper.hpp"
+#include "./spider.hpp"
+#include "./dump.hpp"
 
 Proxy::Proxy(unsigned int port) {
     this->port = port;
@@ -71,17 +74,15 @@ void Proxy::intercept_request() {
             throw Error("Memory allocation error");
 
         try {
-            debug_buffer();
             save_in_cache(REQUEST);
             if(choice == 2) {
                 this->edit(REQUEST);
                 this->reload_buffer(REQUEST);
             }
-            debug_buffer();
             new_request->parse(this->buffer);
             create_http_socket(new_request->header["Host"]);
-            send_http_request(new_request->build_request());
-            this->intercept_response();
+            send_http_request(new_request->build_request(), this->file_name);
+            this->intercept_response(new_request);
             proxy_back();
             delete new_request;
             clear_buffer();
@@ -97,13 +98,14 @@ void Proxy::intercept_request() {
     }
 }
 
-void Proxy::intercept_response() {
+void Proxy::intercept_response(Request* request) {
+    Spider web_spider(this);
     int choice, s_choice;
     cout << "[PROXY INFO] - Choose what do you want to do with the response:" << endl;
     cout << "1 - Send" << endl;
     cout << "2 - Edit" << endl;
     cout << "3 - Spider" << endl;
-    cout << "3 - Dump" << endl;
+    cout << "4 - Dump" << endl;
     cout << "-> ";
     cin >> choice;
     if(choice == 1 || choice == 2) {
@@ -117,6 +119,14 @@ void Proxy::intercept_response() {
         cout << "[SPIDER INFO] - Input tree size: " << endl;
         cin >> s_choice;
         cout << "[SPIDER INFO] - Running spider" << endl;
+        web_spider.file.open("../spider/"+this->file_name);
+        web_spider.file << request->end_point << endl;
+        web_spider.run(request->end_point, request->header["Host"], s_choice, 0);
+        web_spider.file.close();
+        cout << "[SPIDER INFO] - Finished execution" << endl;
+    }else if(choice == 4){
+        cout << "[DUMP INFO] - Running dumo" << endl;
+
     }else{
         cout << "Option not avaible" << endl;
     }
@@ -158,24 +168,25 @@ void Proxy::create_http_socket(const string addr){
         throw Error("Could not connect with the following socket");
 }
 
-void Proxy::send_http_request(const string msg){
+void Proxy::send_http_request(const string msg, string file_name){
     if (send(this->http_sockfd, msg.c_str(), msg.size(), 0) <= 0)
         throw Error("Could send message to remote server");
     
     cout << "[PROXY INFO] - Request sent to original path" << endl;
     cout << msg << endl;
 
-    ssize_t bytes;
+    ssize_t bytes, total=0;
     ofstream file;
-    file.open("../cache/response_" + this->file_name);
+    file.open("../cache/response_" + file_name);
     clear_buffer();
     cout << "[PROXY INFO] - Start of response" << endl;
     while(( bytes = recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0)) > 0){
-        cout << "\t" << bytes << " bytes received" << endl;
+        total+=bytes;
         file << this->buffer;
         clear_buffer();
     }
-    cout << endl << "[PROXY INFO] - End of response" << endl;
+    cout << "\t" << total << " bytes received" << endl;
+    cout << "[PROXY INFO] - End of response" << endl;
     file.close();
 }
 

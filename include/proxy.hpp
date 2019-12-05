@@ -9,8 +9,8 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include"./helper.hpp"
-#include"./request.hpp"
+#include "./request.hpp"
+
 #define BUFFERSIZE 4096
 using namespace std;
 
@@ -21,7 +21,6 @@ class Proxy {
         int connection;
         struct sockaddr_in address;
         char buffer[BUFFERSIZE];
-        char *response;
         int http_sockfd;
         string file_name;
     public:
@@ -31,13 +30,13 @@ class Proxy {
         void loop();
         void handle_request();
         void create_http_socket(const string);
-        void send_http_request(const string);
+        void send_http_request(const string, const string);
         void clear_buffer();
         void proxy_back();
         void save_in_cache(int);
         void debug_buffer();
         void intercept_request();
-        void intercept_response();
+        void intercept_response(Request*);
         void edit(int);
         void reload_buffer(int);
 };

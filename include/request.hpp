@@ -17,6 +17,7 @@ class Request {
         string method;
         string path;
         string version;
+        string end_point;
         map<string, string> header;
         Request();
         ~Request();

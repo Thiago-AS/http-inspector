@@ -10,7 +10,7 @@ class Spider
         Proxy *proxy;
         vector<string> references;
 
-        void run(string, string, int, int, int);
+        void run(string, string, int, int);
         void getPageReference(string, int, int, fstream&);
         int searchLineReference(string, int, string, int, string, int, int);
         Spider(Proxy* proxy):proxy(proxy){};

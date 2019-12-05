@@ -1,5 +1,7 @@
 ,vscode/
 cache/*
+spider/*
+dump/*
 aracne
 # Prerequisites
 *.d

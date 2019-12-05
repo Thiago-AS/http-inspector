@@ -54,9 +54,9 @@ bool Request::valid_method(const string method) {
 }
 
 string Request::build_request() {
-    string end_point = this->path.substr(7, this->path.size());
-    end_point = end_point.substr(end_point.find('/'), end_point.size());
-    string request = this->method + " " + end_point + " " + this->version
+    this->end_point = this->path.substr(7, this->path.size());
+    this->end_point = end_point.substr(end_point.find('/'), end_point.size());
+    string request = this->method + " " + this->end_point + " " + this->version
     + "\r\nHost: " + this->header["Host"] + "\r\n\r\n\r\n";
     return request;
 }
