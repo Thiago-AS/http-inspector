@@ -37,7 +37,7 @@ void Proxy::loop() {
         if(this->connection < 0)
             throw Error("Could not accept the connection");
         
-        cout << "[INFO] - Connection established" << endl;
+        cout << "[PROXY INFO] - Connection established" << endl;
 
         try {
             handle_request();
@@ -58,13 +58,13 @@ void Proxy::handle_request() {
 }
 
 void Proxy::intercept_request() {
-    int choice = 1;
-    cout << "[INFO] - Choose what do you want to do with the request:" << endl;
+    int choice;
+    cout << "[PROXY INFO] - Choose what do you want to do with the request:" << endl;
     cout << "1 - Send" << endl;
     cout << "2 - Edit" << endl;
     cout << "3 - Block" << endl;
     cout << "-> ";
-    //cin >> choice;
+    cin >> choice;
     if(choice == 1 || choice == 2) {
         Request *new_request = new Request();
         if(new_request == nullptr) 
@@ -98,8 +98,8 @@ void Proxy::intercept_request() {
 }
 
 void Proxy::intercept_response() {
-    int choice;
-    cout << "[INFO] - Choose what do you want to do with the response:" << endl;
+    int choice, s_choice;
+    cout << "[PROXY INFO] - Choose what do you want to do with the response:" << endl;
     cout << "1 - Send" << endl;
     cout << "2 - Edit" << endl;
     cout << "3 - Spider" << endl;
@@ -114,7 +114,9 @@ void Proxy::intercept_response() {
             throw;
         } 
     }else if(choice == 3){
-        cout << "Request Blocked" << endl;
+        cout << "[SPIDER INFO] - Input tree size: " << endl;
+        cin >> s_choice;
+        cout << "[SPIDER INFO] - Running spider" << endl;
     }else{
         cout << "Option not avaible" << endl;
     }
@@ -160,20 +162,20 @@ void Proxy::send_http_request(const string msg){
     if (send(this->http_sockfd, msg.c_str(), msg.size(), 0) <= 0)
         throw Error("Could send message to remote server");
     
-    cout << "[INFO] - Request sent to original path" << endl;
+    cout << "[PROXY INFO] - Request sent to original path" << endl;
     cout << msg << endl;
 
     ssize_t bytes;
     ofstream file;
     file.open("../cache/response_" + this->file_name);
     clear_buffer();
-    cout << "[INFO] - Start of response" << endl;
+    cout << "[PROXY INFO] - Start of response" << endl;
     while(( bytes = recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0)) > 0){
         cout << "\t" << bytes << " bytes received" << endl;
         file << this->buffer;
         clear_buffer();
     }
-    cout << endl << "[INFO] - End of response" << endl;
+    cout << endl << "[PROXY INFO] - End of response" << endl;
     file.close();
 }
 

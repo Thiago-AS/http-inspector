@@ -27,7 +27,7 @@ void Request::parse(const char* response) {
         throw Error("Invalid request - protocol " + this->version + " not supported");
 
     if(!valid_method(this->method))
-        throw Error("Invalid request - method " + this->method + " not supported");
+        throw Error("Invalid request - method not supported");
     
     get_headers(str_response);
 }
