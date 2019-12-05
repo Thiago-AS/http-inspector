@@ -1,7 +1,6 @@
 #include "../include/proxy.hpp"
 #include "./helper.hpp"
 #include "./spider.hpp"
-#include "./dump.hpp"
 
 Proxy::Proxy(unsigned int port) {
     this->port = port;
@@ -125,7 +124,7 @@ void Proxy::intercept_response(Request* request) {
         web_spider.file.close();
         cout << "[SPIDER INFO] - Finished execution" << endl;
     }else if(choice == 4){
-        cout << "[DUMP INFO] - Running dumo" << endl;
+        cout << "[DUMP INFO] - Not implemented" << endl;
 
     }else{
         cout << "Option not avaible" << endl;

@@ -19,4 +19,4 @@ aracne: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ aracne *~
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ aracne *~ ../cache/* *~ ../spider/*

@@ -7,7 +7,6 @@
 
 using namespace std;
 
-
 void Spider::run(string file_name, string addr, int tree_h, int act_h) {
 	string path = file_name;
 	replace( path.begin(), path.end(), '_', '/');
@@ -18,7 +17,7 @@ void Spider::run(string file_name, string addr, int tree_h, int act_h) {
 		replace( f_name.begin(), f_name.end(), '/', '_');
 		file.open("../cache/response_" + f_name);
 		if(file.is_open()) {
-			getPageReference(addr, act_h, tree_h, file);
+			get_page_references(addr, act_h, tree_h, file);
 		} else {
 			proxy->send_http_request("GET " + path + " HTTP/1.1\r\nHost: " + addr + "\r\n\r\n\r\n", f_name);
 		}
@@ -31,21 +30,21 @@ void Spider::run(string file_name, string addr, int tree_h, int act_h) {
 	
 }
 
-void Spider::getPageReference(string addr, int act_h, int tree_h, fstream& requestFile) {
+void Spider::get_page_references(string addr, int act_h, int tree_h, fstream& req_file) {
 	unsigned int position = 0;
 	string line;
-	while(getline(requestFile, line)) { 
+	while(getline(req_file, line)) { 
 		while (line.find("href=",  position) != string::npos) {
-			position = searchLineReference("href=", 6, line, position, addr, act_h, tree_h);
+			position = get_line_reference("href=", 6, line, position, addr, act_h, tree_h);
 		}
 		position = 0;
 		while (line.find("src=\"", position) != string::npos) {
-			position = searchLineReference("src=\"", 5 ,line, position, addr, act_h, tree_h);
+			position = get_line_reference("src=\"", 5 ,line, position, addr, act_h, tree_h);
 		}
 	}
 }
 
-int Spider::searchLineReference(string search_token, int offset, string line, int position, 
+int Spider::get_line_reference(string search_token, int offset, string line, int position, 
 	string addr, int act_h, int tree_h) {
 	string value;
 	int pos = line.find(search_token, position), i = 0;
@@ -64,15 +63,15 @@ int Spider::searchLineReference(string search_token, int offset, string line, in
 			}else{
 				value.insert(0, 1, '/');
 			}
-			int hasValue = 0;
+			int flag = 0;
 			for(unsigned int i = 0; i < this->references.size() ; i++)
 			{
 				if (this->references[i] == value) {
-					hasValue = 1;
+					flag = 1;
 					break;
 				}
 			}
-			if (!hasValue) {
+			if (!flag) {
 				for(int i = 0; i < act_h + 1; i++) {
 					this->file << "\t";
 				}
