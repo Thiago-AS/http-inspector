@@ -9,9 +9,7 @@ Request::~Request(){
 void Request::parse(const char* response) {
     string str_response(response);
     this->original_message = str_response;
-    size_t index = str_response.find("\r\n\r\n"), pos;
-    if(index == string::npos)
-        throw Error("Invalid request - no end of header");
+    size_t pos;
 
     pos = str_response.find(' ');
     this->method = str_response.substr(0, pos);
@@ -26,7 +24,10 @@ void Request::parse(const char* response) {
     str_response.erase(0, pos+2); 
 
     if(!valid_protocol(this->version))
-        throw Error("Invalid request - protocol not supported");
+        throw Error("Invalid request - protocol " + this->version + " not supported");
+
+    if(!valid_method(this->method))
+        throw Error("Invalid request - method " + this->method + " not supported");
     
     get_headers(str_response);
 }
@@ -48,9 +49,13 @@ bool Request::valid_protocol(const string version) {
     return (protocol == "HTTP") ? true : false;
 }
 
+bool Request::valid_method(const string method) {
+    return (method == "GET");
+}
+
 string Request::build_request() {
-    size_t init = this->path.find_last_of("http://" + this->header["Host"]);
-    string end_point = this->path.substr(init, this->path.size());
+    string end_point = this->path.substr(7, this->path.size());
+    end_point = end_point.substr(end_point.find('/'), end_point.size());
     string request = this->method + " " + end_point + " " + this->version
     + "\r\nHost: " + this->header["Host"] + "\r\n\r\n\r\n";
     return request;

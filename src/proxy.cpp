@@ -49,29 +49,87 @@ void Proxy::loop() {
 }
 
 void Proxy::handle_request() {
-    this->response = (char *) malloc(BUFFERSIZE);
-    if(this->response == nullptr) 
-        throw Error("Memory allocation error");
-    
     int byte_recieved = recv(this->connection, this->buffer, 
                                 sizeof(this->buffer), 0);
     if(byte_recieved < 0)
         throw Error("Error reading the request");
 
-    strcat(response, buffer);
-    Request *new_request = new Request();
-    if(new_request == nullptr) 
-        throw Error("Memory allocation error");
+    this->intercept_request();
+}
 
-    try {
-        new_request->parse(response);
-        save_in_cache(new_request, REQUEST);
-        create_http_socket(new_request->header["Host"]);
-        send_http_request(new_request->build_request());
-        proxy_back();
-    } catch (const Error& e) {
-        throw;
-    } 
+void Proxy::intercept_request() {
+    int choice = 1;
+    cout << "[INFO] - Choose what do you want to do with the request:" << endl;
+    cout << "1 - Send" << endl;
+    cout << "2 - Edit" << endl;
+    cout << "3 - Block" << endl;
+    cout << "-> ";
+    //cin >> choice;
+    if(choice == 1 || choice == 2) {
+        Request *new_request = new Request();
+        if(new_request == nullptr) 
+            throw Error("Memory allocation error");
+
+        try {
+            debug_buffer();
+            save_in_cache(REQUEST);
+            if(choice == 2) {
+                this->edit(REQUEST);
+                this->reload_buffer(REQUEST);
+            }
+            debug_buffer();
+            new_request->parse(this->buffer);
+            create_http_socket(new_request->header["Host"]);
+            send_http_request(new_request->build_request());
+            this->intercept_response();
+            proxy_back();
+            delete new_request;
+            clear_buffer();
+        } catch (const Error& e) {
+            delete new_request;
+            clear_buffer();
+            throw;
+        } 
+    }else if(choice == 3){
+        cout << "Request Blocked" << endl;
+    }else{
+        cout << "Option not avaible" << endl;
+    }
+}
+
+void Proxy::intercept_response() {
+    int choice;
+    cout << "[INFO] - Choose what do you want to do with the response:" << endl;
+    cout << "1 - Send" << endl;
+    cout << "2 - Edit" << endl;
+    cout << "3 - Spider" << endl;
+    cout << "3 - Dump" << endl;
+    cout << "-> ";
+    cin >> choice;
+    if(choice == 1 || choice == 2) {
+        try {
+            if(choice == 2) this->edit(RESPONSE);
+            proxy_back();
+        } catch (const Error& e) {
+            throw;
+        } 
+    }else if(choice == 3){
+        cout << "Request Blocked" << endl;
+    }else{
+        cout << "Option not avaible" << endl;
+    }
+}
+
+void Proxy::edit(int type) {
+    ifstream file;
+    string cmd;
+    if(type == REQUEST)
+        cmd = "vim ../cache/request_" + this->file_name;
+    else 
+        cmd = "vim ../cache/response_" + this->file_name;
+
+    cout << cmd << endl;
+    system(cmd.c_str());
 }
 
 void Proxy::create_http_socket(const string addr){
@@ -81,7 +139,7 @@ void Proxy::create_http_socket(const string addr){
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     struct timeval tv;
-    tv.tv_sec = 2;
+    tv.tv_sec = 1;
 
     cout << "[INFO] - Host: " + addr + " Port: " + port << endl;
 
@@ -99,13 +157,15 @@ void Proxy::create_http_socket(const string addr){
 }
 
 void Proxy::send_http_request(const string msg){
-    if (write(this->http_sockfd, msg.c_str(), msg.size()) <= 0)
+    if (send(this->http_sockfd, msg.c_str(), msg.size(), 0) <= 0)
         throw Error("Could send message to remote server");
     
     cout << "[INFO] - Request sent to original path" << endl;
+    cout << msg << endl;
+
     ssize_t bytes;
     ofstream file;
-    file.open("../cache/response_" + file_name);
+    file.open("../cache/response_" + this->file_name);
     clear_buffer();
     cout << "[INFO] - Start of response" << endl;
     while(( bytes = recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0)) > 0){
@@ -118,23 +178,54 @@ void Proxy::send_http_request(const string msg){
 }
 
 void Proxy::proxy_back() {
-    cout << "[INFO] - Proxy Back" << endl;
-
+    ifstream file;
+    file.open("../cache/response_" + this->file_name);
+    string proxy_back_msg((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    if (send(this->connection, proxy_back_msg.c_str(), proxy_back_msg.size(), 0) <= 0)
+        throw Error("Could send message to remote server");
 }
 
 void Proxy::clear_buffer() {
     bzero(this->buffer, sizeof(this->buffer));
 }
 
-void Proxy::save_in_cache(Request *req, int type) {
+void Proxy::save_in_cache(int type) {
     ofstream file;
-    this->file_name = req->path;
-    replace(file_name.begin(), file_name.end(), '/', '|');
+
+    string path;
+    string str_response(this->buffer);
+    str_response.erase(0, str_response.find(' ')+1); 
+    path = str_response.substr(0, str_response.find(' '));
+    this->file_name = path;
+
+    replace(this->file_name.begin(), this->file_name.end(), '/', '_');
     if(type == REQUEST) {
-        file.open("../cache/requests_" + file_name);
+        file.open("../cache/request_" + this->file_name);
     } else {
-        file.open("../cache/response_" + file_name);
+        file.open("../cache/response_" + this->file_name);
     }
     file << this->buffer;
     file.close();
+}
+
+void Proxy::debug_buffer() {
+    cout << "[DEBUG] - Display buffer" << endl;
+    for(int i=0; i<BUFFERSIZE; i++) {
+        cout << this->buffer[i];
+    }
+    cout << "[DEBUG] - End display buffer" << endl;
+}
+
+void Proxy::reload_buffer(int type) {
+    clear_buffer();
+    ifstream file;
+    if(type == REQUEST) {
+        file.open("../cache/request_" + this->file_name);
+    } else {
+        file.open("../cache/response_" + this->file_name);
+    }
+    string new_buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    strcpy(this->buffer, new_buffer.c_str());
+    file.close();
+
 }

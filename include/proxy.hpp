@@ -34,7 +34,12 @@ class Proxy {
         void send_http_request(const string);
         void clear_buffer();
         void proxy_back();
-        void save_in_cache(Request*, int);
+        void save_in_cache(int);
+        void debug_buffer();
+        void intercept_request();
+        void intercept_response();
+        void edit(int);
+        void reload_buffer(int);
 };
 
 #endif

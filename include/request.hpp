@@ -24,6 +24,7 @@ class Request {
         void get_headers(string&);
         bool valid_protocol(const string);
         string build_request();
+        bool valid_method(const string);
 };
 
 #endif
