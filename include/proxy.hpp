@@ -22,8 +22,8 @@ class Proxy {
         struct sockaddr_in address;
         char buffer[BUFFERSIZE];
         char *response;
-
         int http_sockfd;
+        string file_name;
     public:
         Proxy(unsigned int);
         ~Proxy();

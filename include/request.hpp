@@ -13,7 +13,7 @@ using namespace std;
 
 class Request {
     public:
-        string request_message;
+        string original_message;
         string method;
         string path;
         string version;
@@ -23,6 +23,7 @@ class Request {
         void parse(const char*);
         void get_headers(string&);
         bool valid_protocol(const string);
+        string build_request();
 };
 
 #endif

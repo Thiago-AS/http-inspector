@@ -67,8 +67,8 @@ void Proxy::handle_request() {
         new_request->parse(response);
         save_in_cache(new_request, REQUEST);
         create_http_socket(new_request->header["Host"]);
-        send_http_request(new_request->request_message);
-        //proxy_back();
+        send_http_request(new_request->build_request());
+        proxy_back();
     } catch (const Error& e) {
         throw;
     } 
@@ -80,6 +80,8 @@ void Proxy::create_http_socket(const string addr){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
+    struct timeval tv;
+    tv.tv_sec = 2;
 
     cout << "[INFO] - Host: " + addr + " Port: " + port << endl;
 
@@ -89,22 +91,35 @@ void Proxy::create_http_socket(const string addr){
     if ((this->http_sockfd = socket(serv_addr->ai_family, serv_addr->ai_socktype, serv_addr->ai_protocol)) == 0) 
         throw Error("Socket creation failed"); 
 
+    if (setsockopt(this->http_sockfd, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval)) == -1)
+        throw Error("Failed to set socket options");
+
     if (connect(this->http_sockfd,serv_addr->ai_addr, serv_addr->ai_addrlen) < 0 )
         throw Error("Could not connect with the following socket");
 }
 
 void Proxy::send_http_request(const string msg){
-    cout << msg << endl;
-    if ((send(this->http_sockfd, (void*) msg.c_str(), msg.size(), 0)) < 0)
+    if (write(this->http_sockfd, msg.c_str(), msg.size()) <= 0)
         throw Error("Could send message to remote server");
+    
+    cout << "[INFO] - Request sent to original path" << endl;
+    ssize_t bytes;
+    ofstream file;
+    file.open("../cache/response_" + file_name);
+    clear_buffer();
+    cout << "[INFO] - Start of response" << endl;
+    while(( bytes = recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0)) > 0){
+        cout << "\t" << bytes << " bytes received" << endl;
+        file << this->buffer;
+        clear_buffer();
+    }
+    cout << endl << "[INFO] - End of response" << endl;
+    file.close();
 }
 
 void Proxy::proxy_back() {
-    clear_buffer();
-    while(recv(this->http_sockfd, this->buffer, BUFFERSIZE, 0) != 0){
+    cout << "[INFO] - Proxy Back" << endl;
 
-        clear_buffer();
-    }
 }
 
 void Proxy::clear_buffer() {
@@ -113,7 +128,7 @@ void Proxy::clear_buffer() {
 
 void Proxy::save_in_cache(Request *req, int type) {
     ofstream file;
-    string file_name = req->path;
+    this->file_name = req->path;
     replace(file_name.begin(), file_name.end(), '/', '|');
     if(type == REQUEST) {
         file.open("../cache/requests_" + file_name);
